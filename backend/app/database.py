@@ -10,13 +10,27 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./typeform.db")
 
 if SQLALCHEMY_DATABASE_URL.startswith("sqlite+libsql"):
+    from urllib.parse import urlparse, parse_qs
+
+    parsed = urlparse(SQLALCHEMY_DATABASE_URL.replace("sqlite+libsql://", "https://"))
+    params = parse_qs(parsed.query)
+
+    auth_token = params.get("authToken", [None])[0]
+    secure = params.get("secure", ["true"])[0].lower() == "true"
+
+    # Rebuild a clean URL without query params (SQLAlchemy chokes on them)
+    clean_url = f"sqlite+libsql://{parsed.hostname}/"
+
     connect_args = {}
+    if auth_token:
+        connect_args["auth_token"] = auth_token
+    if secure:
+        connect_args["secure"] = True
+
+    engine = create_engine(clean_url, connect_args=connect_args)
 else:
     connect_args = {"check_same_thread": False}
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args=connect_args
-)
+    engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
