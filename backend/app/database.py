@@ -1,6 +1,10 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from dotenv import load_dotenv
+
+# Load environment variables from the app directory .env file
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Fall back to local SQLite if DATABASE_URL is not provided
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./typeform.db")
