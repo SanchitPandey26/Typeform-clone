@@ -9,6 +9,11 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 # Fall back to local SQLite if DATABASE_URL is not provided
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./typeform.db")
 
+if SQLALCHEMY_DATABASE_URL.startswith("sqlite+libsql"):
+    import libsql_experimental
+    from sqlalchemy.dialects import registry
+    registry.register("sqlite.libsql", "libsql_experimental.sqlalchemy", "dialect")
+
 connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(
