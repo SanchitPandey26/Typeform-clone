@@ -73,7 +73,7 @@ export default function ResponsesPage() {
           {summary && summary.questions.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {summary.questions.map((q) => (
-                <SummaryCard key={q.question_id} summary={q} />
+                <SummaryCard key={q.question_id} summary={q} showPercent={true} />
               ))}
             </div>
           ) : (
