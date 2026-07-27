@@ -18,14 +18,13 @@ if SQLALCHEMY_DATABASE_URL.startswith("sqlite+libsql"):
     auth_token = params.get("authToken", [None])[0]
     secure = params.get("secure", ["true"])[0].lower() == "true"
 
-    # Rebuild a clean URL without query params (SQLAlchemy chokes on them)
-    clean_url = f"sqlite+libsql://{parsed.hostname}/"
+    # Rebuild URL keeping secure param (driver reads it from URL) but
+    # move authToken to connect_args (SQLAlchemy strips unknown query params)
+    clean_url = f"sqlite+libsql://{parsed.hostname}/?secure=true"
 
     connect_args = {}
     if auth_token:
         connect_args["auth_token"] = auth_token
-    if secure:
-        connect_args["secure"] = True
 
     engine = create_engine(clean_url, connect_args=connect_args)
 else:
