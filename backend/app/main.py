@@ -21,6 +21,15 @@ app.add_middleware(
 app.include_router(forms.router)
 app.include_router(public.router)
 
+@app.get("/api/seed")
+def seed_database():
+    from .seed import run_seed
+    try:
+        run_seed()
+        return {"status": "Database seeded successfully!"}
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
 
 @app.get("/")
 def root():
