@@ -34,7 +34,7 @@ The database relies on three core entities:
 
 ### 1. Clone the repository
 ```bash
-git clone <repository_url>
+git clone https://github.com/SanchitPandey26/Typeform-clone.git
 cd Typeform-clone
 ```
 
@@ -70,3 +70,4 @@ npm run dev
 - **Respondent Tracking**: No login is required to submit a form. Partial responses are tracked by creating a Response row immediately upon form load and updating it dynamically. 
 - **Contact Info Group**: Rather than implementing complex nested question groups (like Typeform's Contact Info block), the schema keeps it simple: flat questions. Contact forms are just multiple consecutive standard questions (First Name, Email, etc.).
 - **Themes & Logic Jumps**: Handled via simple UI placeholders as specified by the "mocked sections" assignment allowances.
+- **Serverless API Latency**: Since the backend is deployed on Vercel's free tier with a Turso database, API calls typically take 3-4 seconds. This is due to serverless cold starts and the time required to re-establish secure TLS handshakes with the database over HTTP on every container spin-up.

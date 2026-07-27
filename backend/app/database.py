@@ -26,7 +26,15 @@ if SQLALCHEMY_DATABASE_URL.startswith("sqlite+libsql"):
     if auth_token:
         connect_args["auth_token"] = auth_token
 
-    engine = create_engine(clean_url, connect_args=connect_args)
+    from sqlalchemy.pool import StaticPool
+
+    engine = create_engine(
+        clean_url,
+        connect_args=connect_args,
+        poolclass=StaticPool,         # Reuse a single connection across warm invocations
+        pool_pre_ping=False,          # Skip health-check query before each request
+        pool_reset_on_return=None,    # Skip ROLLBACK on connection return
+    )
 else:
     connect_args = {"check_same_thread": False}
     engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args=connect_args)

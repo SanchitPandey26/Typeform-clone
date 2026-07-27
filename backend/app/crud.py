@@ -1,7 +1,8 @@
 import uuid
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from datetime import datetime
+from collections import defaultdict
 from fastapi import HTTPException
 from . import models, schemas
 
@@ -9,19 +10,27 @@ from . import models, schemas
 
 def get_forms(db: Session):
     forms = db.query(models.Form).order_by(models.Form.updated_at.desc()).all()
-    result = []
-    for f in forms:
-        count = db.query(func.count(models.Response.id)).filter(
-            models.Response.form_id == f.id, models.Response.completed == True
-        ).scalar()
-        result.append(
-            schemas.FormListOut(
-                id=f.id, title=f.title, status=f.status, slug=f.slug,
-                created_at=f.created_at, updated_at=f.updated_at,
-                response_count=count,
-            )
+
+    # Single query to get all response counts instead of N+1
+    form_ids = [f.id for f in forms]
+    counts = {}
+    if form_ids:
+        rows = db.query(
+            models.Response.form_id, func.count(models.Response.id)
+        ).filter(
+            models.Response.form_id.in_(form_ids),
+            models.Response.completed == True
+        ).group_by(models.Response.form_id).all()
+        counts = dict(rows)
+
+    return [
+        schemas.FormListOut(
+            id=f.id, title=f.title, status=f.status, slug=f.slug,
+            created_at=f.created_at, updated_at=f.updated_at,
+            response_count=counts.get(f.id, 0),
         )
-    return result
+        for f in forms
+    ]
 
 
 def get_form(db: Session, form_id: int):
@@ -245,17 +254,30 @@ def get_form_summary(db: Session, form_id: int):
     all_responses = db.query(models.Response).filter(models.Response.form_id == form_id).all()
     completed = [r for r in all_responses if r.completed]
 
+    # Single query to fetch ALL answers for this form's questions
+    question_ids = [q.id for q in form.questions]
+    all_answers = []
+    if question_ids:
+        all_answers = db.query(models.Answer).filter(
+            models.Answer.question_id.in_(question_ids)
+        ).all()
+
+    # Group answers by question_id in memory
+    answers_by_q = defaultdict(list)
+    for a in all_answers:
+        answers_by_q[a.question_id].append(a)
+
     question_summaries = []
     for q in form.questions:
-        answers = db.query(models.Answer).filter(models.Answer.question_id == q.id).all()
+        q_answers = answers_by_q.get(q.id, [])
         summary = schemas.QuestionSummary(
             question_id=q.id, label=q.label, type=q.type,
-            total_answers=len(answers), breakdown=None,
+            total_answers=len(q_answers), breakdown=None,
         )
 
         if q.type in ("multiple_choice", "dropdown", "yes_no", "rating"):
             breakdown: dict[str, int] = {}
-            for a in answers:
+            for a in q_answers:
                 key = str(a.value)
                 breakdown[key] = breakdown.get(key, 0) + 1
             summary.breakdown = breakdown
