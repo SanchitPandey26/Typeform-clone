@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-figtree), system-ui, sans-serif;
+
+  --color-canvas: #F8F8F7;
+  --color-ink: #191919;
+  --color-accent-teal: #00363A;
+  --color-accent-tealLight: #E8F4F3;
+  --color-avatar-from: #D97B3F;
+  --color-avatar-to: #B85C1F;
+
+  --radius-xl2: 14px;
+}
