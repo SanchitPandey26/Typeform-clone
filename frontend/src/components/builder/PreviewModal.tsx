@@ -74,6 +74,9 @@ export default function PreviewModal({ form, onClose }: { form: Form; onClose: (
                   error={null}
                   direction={direction}
                   onChange={(val) => setAnswers((a) => ({ ...a, [question.id]: val }))}
+                  index={index}
+                  isLast={index === form.questions.length - 1}
+                  onNext={goNext}
                 />
               )}
             </AnimatePresence>
